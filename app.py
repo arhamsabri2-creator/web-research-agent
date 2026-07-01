@@ -132,7 +132,7 @@ def scheduled_research():
     send_whatsapp(result, topic)
 
 scheduler = BackgroundScheduler()
-scheduler.add_job(scheduled_research, "cron", hour=8, minute=0)
+scheduler.add_job(scheduled_research, "cron", hour=15, minute=15)
 scheduler.start()
 
 init_db()
