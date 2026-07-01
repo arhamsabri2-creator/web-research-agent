@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Research Agent</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 60px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        textarea {
+            width: 100%;
+            height: 80px;
+            padding: 12px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            resize: none;
+            box-sizing: border-box;
+        }
+        .buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+        }
+        button {
+            flex: 1;
+            padding: 14px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        #researchBtn {
+            background-color: #333;
+            color: white;
+        }
+        #researchBtn:hover {
+            background-color: #555;
+        }
+        #historyBtn {
+            background-color: #fff;
+            color: #333;
+            border: 1px solid #ccc;
+        }
+        #historyBtn:hover {
+            background-color: #eee;
+        }
+        #result {
+            margin-top: 30px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            white-space: pre-wrap;
+            font-size: 15px;
+            line-height: 1.6;
+            display: none;
+        }
+        #loading {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 16px;
+            color: #666;
+            display: none;
+        }
+        #historySection {
+            margin-top: 30px;
+            display: none;
+        }
+        .report-item {
+            background: white;
+            padding: 16px 20px;
+            margin-bottom: 12px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+        .report-item:hover {
+            background-color: #f0f0f0;
+        }
+        .report-topic {
+            font-size: 15px;
+            font-weight: bold;
+            color: #333;
+        }
+        .report-date {
+            font-size: 13px;
+            color: #999;
+        }
+        #fullReport {
+            margin-top: 20px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            white-space: pre-wrap;
+            font-size: 15px;
+            line-height: 1.6;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Web Research Agent</h1>
+    <textarea id="topic" placeholder="Type your research topic here..."></textarea>
+    <div class="buttons">
+        <button id="researchBtn" onclick="startResearch()">Research</button>
+        <button id="historyBtn" onclick="toggleHistory()">History</button>
+    </div>
+    <div id="loading">Researching... please wait</div>
+    <div id="result"></div>
+
+    <div id="historySection">
+        <h2>Research History</h2>
+        <div id="historyList"></div>
+        <div id="fullReport"></div>
+    </div>
+
+    <script>
+        async function startResearch() {
+            const topic = document.getElementById("topic").value;
+            if (!topic) return;
+
+            document.getElementById("loading").style.display = "block";
+            document.getElementById("result").style.display = "none";
+            document.getElementById("historySection").style.display = "none";
+
+            const response = await fetch("/research", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ topic: topic })
+            });
+
+            const data = await response.json();
+
+            document.getElementById("loading").style.display = "none";
+            document.getElementById("result").style.display = "block";
+            document.getElementById("result").innerText = data.result;
+        }
+
+        async function toggleHistory() {
+            const section = document.getElementById("historySection");
+            if (section.style.display === "block") {
+                section.style.display = "none";
+                return;
+            }
+
+            const response = await fetch("/get_history");
+            const data = await response.json();
+
+            const list = document.getElementById("historyList");
+            list.innerHTML = "";
+            document.getElementById("fullReport").style.display = "none";
+
+            data.reports.forEach(report => {
+                const item = document.createElement("div");
+                item.className = "report-item";
+                item.innerHTML = `
+                    <span class="report-topic">${report[1]}</span>
+                    <span class="report-date">${report[2]}</span>
+                `;
+                item.onclick = () => loadReport(report[0]);
+                list.appendChild(item);
+            });
+
+            section.style.display = "block";
+            document.getElementById("result").style.display = "none";
+        }
+
+        async function loadReport(id) {
+            const response = await fetch(`/get_report/${id}`);
+            const data = await response.json();
+            const fullReport = document.getElementById("fullReport");
+            fullReport.innerText = data.report;
+            fullReport.style.display = "block";
+        }
+    </script>
+</body>
+</html>
