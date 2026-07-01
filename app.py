@@ -3,6 +3,7 @@ from openai import OpenAI
 from tavily import TavilyClient
 from twilio.rest import Client
 from dotenv import load_dotenv
+from apscheduler.schedulers.background import BackgroundScheduler
 import os
 import json
 import sqlite3
@@ -124,6 +125,18 @@ def run_agent(topic):
                     "content": result
                 })
 
+def scheduled_research():
+    topic = "Latest AI news and developments today"
+    result = run_agent(topic)
+    save_report(topic, result)
+    send_whatsapp(result, topic)
+
+scheduler = BackgroundScheduler()
+scheduler.add_job(scheduled_research, "cron", hour=8, minute=0)
+scheduler.start()
+
+init_db()
+
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -155,8 +168,6 @@ def get_history():
 def get_report(report_id):
     report = get_report_by_id(report_id)
     return jsonify({"report": report[1]})
-
-init_db()
 
 if __name__ == "__main__":
     app.run(debug=True)
