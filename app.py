@@ -156,6 +156,7 @@ def get_report(report_id):
     report = get_report_by_id(report_id)
     return jsonify({"report": report[1]})
 
+iinit_db()
+
 if __name__ == "__main__":
-    init_db()
     app.run(debug=True)
